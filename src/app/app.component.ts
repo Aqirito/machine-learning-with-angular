@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import * as tf from '@tensorflow/tfjs';
+import { Subject } from 'rxjs';
+import { AiService } from './services/ai/ai.service';
 
 @Component({
   selector: 'app-root',
@@ -9,51 +10,87 @@ import * as tf from '@tensorflow/tfjs';
 export class AppComponent implements OnInit {
   title = 'Machine-Learning-with-Angular';
   predictions: any;
-  model: any
   video: any;
   canvas: any;
-  canvasCtx: any;
-
-  constructor() {}
+  isCameraOpen = new Subject();
+  mask_on: any = 0;
+  mask_off: any = 0;
+  imageData: any;
+  ctx: any;
+  constructor( private aiService: AiService) { }
 
   ngOnInit(): void {
-    this.loadModel();
+    // this.loadModel();
     this.video = document.getElementById('video') as HTMLVideoElement;
-  }
+    this.canvas = document.getElementById('canvas') as HTMLCanvasElement;
 
-  async loadModel() {
-    this.model = await tf.loadLayersModel('/assets/model.json');
-    console.log("model", this.model);
-  }
+    this.ctx = this.canvas.getContext('2d');
 
-  predict() {
-    const pred = tf.tidy(() => {
-      // let img = tf.browser.fromPixels(this.video);
-      // img = img.reshape([1, 28, 28, 1]);
-      // img = tf.cast(img, 'float32');
+    this.animate();
 
-      this.canvas = document.getElementById('c1') as HTMLCanvasElement;
-      this.canvasCtx = this.canvas.getContext('2d');
 
-      this.canvasCtx.drawImage(this.video, 0, 0, 1280, 960);
-      const frame = this.canvasCtx.getImageData(0, 0, 1280, 960);
-      console.log("frame", frame);
-      let img = tf.browser.fromPixels(frame);
-      img = img.reshape([1, frame.width, frame.height]);
-      const output = this.model.predict(img) as any;
-
-      this.predictions = Array.from(output.dataSync());
-      console.log("OPRES", this.predictions);
+    this.isCameraOpen.subscribe({
+      next: (res) => {
+        setTimeout( () => {
+          // run the async predict function and set the values to our state
+          this.aiService.predict(this.imageData).then( (res) => {
+            console.log("Results", res);
+            let confidences = JSON.stringify(res);
+            let parss = JSON.parse(confidences);
+            this.mask_on = parss.Confidences['mask on']
+            this.mask_off = parss.Confidences['mask off']
+            if (this.mask_on > this.mask_off) {
+              console.log("mask on");
+            }
+            if (this.mask_on < this.mask_off) {
+              console.log("mask off");
+            }
+            
+          }).catch( (err) => {
+            console.log("Error on Predict", err)
+          });
+        }, 2000);
+      },
+      error: (err) => {
+        console.log("error", err);
+      }
     });
-
   }
 
   openCamera() {
-    navigator.mediaDevices.getUserMedia({
-      video: {width: 1280 ,height: 960},
-      audio: false
-    }).then(stream => {
+    const constsr = {
+      video: {
+        width: 1280,
+        height: 960,
+        deviceId: {
+          exact: "35f6c3f81e60e4fa441614592552d301bfb3af11fa9fa9641215f1bc0b199ff5"
+        }
+      },
+      audio: false,
+    }
+    navigator.mediaDevices.getUserMedia(constsr).then(stream => {
       this.video.srcObject = stream;
     })
+    this.isCameraOpen.next(true);
+  }
+
+  async checkCameraSource() {
+
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    console.log(devices);
+  }
+  
+  dispose() {
+    this.aiService.dispose();
+  }
+
+  animate() {
+    requestAnimationFrame(this.animate.bind(this));
+    console.log("3434343")
+    // ctx.fillRect(100, 100, 10, 10);
+    this.ctx.drawImage(this.video, 0, 0);
+    // get the pixel data from the full canvas
+    this.imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+    // console.log("image data", this.imageData);
   }
 }
