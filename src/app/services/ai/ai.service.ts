@@ -56,32 +56,28 @@ export class AiService {
   }
 
   async predict(imageData: ImageData) {
-    if (!this.model) {
-      await this.load();
-    }
+    // if (!this.model) {
+    //   await this.load();
+    // }
     const confidencesTensor = tf.tidy(() => {
       // create a tensor from the canvas image data
       const image = tf.browser.fromPixels(imageData);
-      const [imgHeight, imgWidth] = image.shape.slice(0, 2);
-      console.log(`WH: ${[imgHeight, imgWidth]}`);
+      
+      let imageResize = tf.image.resizeBilinear(image, [224,224])
+
       // convert image to 0-1
-      const normalizedImage = tf.div(image, tf.scalar(255));
+      const normalizedImage = tf.div(imageResize, tf.scalar(255));
       // console.log(`Normelaize Image: ${normalizedImage}`);
+      
       // make into a batch of 1 so it is shaped [1, height, width, 3]
-      const batchImage: tf.Tensor4D = tf.expandDims(normalizedImage);
+      const batchImage: tf.Tensor2D = tf.expandDims(normalizedImage);
       // console.log(`batch Image: ${batchImage}`);
 
       // run the model on our image and await the results as an array
       if (this.model) {
-        // return this.model.execute(
-        //   { [this.signature.inputs[this.inputKey].name]: batchImage }, this.outputName
-        // );
-        const model = tf.sequential({
-          layers: [tf.layers.dense({units: 2, inputShape: [10]})]
-        });
-        return model.predict(tf.ones([8, 10]), {batchSize: 4});
+        return this.model.predict(batchImage, {batchSize: 4});
       }
-      return confidencesTensor;
+      return {"sdsd": "sdsd"};
     }) as (tf.Tensor | undefined);
     if (confidencesTensor) {
       // grab the array of values from the tensor data
@@ -90,6 +86,7 @@ export class AiService {
       confidencesTensor.dispose();
       // return a map of [label]: confidence computed by the model
       // the list of labels maps in the same index order as the outputs from the results
+
       return {
         [this.outputKey]: this.labels.reduce(
           (returnConfidences, label, idx) => {
@@ -98,6 +95,6 @@ export class AiService {
         )
       }
     }
-    return confidencesTensor;
+    return {"sdsd": "sdsd"};
   }
 }
