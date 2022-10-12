@@ -27,21 +27,19 @@ export class AiService {
       console.log("Loading our model...");
       const signatureFile = await fetch("./assets/signature.json");
       this.signature = await signatureFile.json();
-      console.log("signature", this.signature);
+      // console.log("signature", this.signature);
       [this.width, this.height] = this.signature.inputs[this.inputKey].shape.slice(1, 3);
-      console.log(`width: ${this.width}, height: ${this.height}`);
+      // console.log(`width: ${this.width}, height: ${this.height}`);
       this.outputName = this.signature.outputs[this.outputKey].name;
-      console.log(`Output Name: ${this.outputName}`);
+      // console.log(`Output Name: ${this.outputName}`);
       this.labels = this.signature.classes[this.labelKey];
-      console.log(`Labels: ${this.labels}`);
+      // console.log(`Labels: ${this.labels}`);
       this.version = this.signature.export_model_version || LEGACY_VERSION;
       if (!this.version || !SUPPORTED_VERSIONS.includes(this.version)) {
         const versionMessage = `The model version ${this.version} you are using for this starter project may not be compatible with the supported versions ${SUPPORTED_VERSIONS}. Please update both this starter project and Lobe to latest versions, and try exporting your model again. If the issue persists, please contact us at lobesupport@microsoft.com`;
-        console.error(versionMessage);
         throw new Error(versionMessage);
       }
       this.model = await tf.loadLayersModel("./assets/model.json");
-      console.log("model", this.model);
       console.log("Model loaded!");
     }
   }

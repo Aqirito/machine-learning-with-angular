@@ -23,6 +23,8 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     this.video = document.getElementById('video') as HTMLVideoElement;
     this.canvas = document.getElementById('canvas') as HTMLCanvasElement;
+    this.canvas.width = this.video.width;
+    this.canvas.height = this.video.height;
 
     this.ctx = this.canvas.getContext('2d');
   }
@@ -43,9 +45,9 @@ export class AppComponent implements OnInit {
     }
     await navigator.mediaDevices.getUserMedia(constsr).then(stream => {
       this.video.srcObject = stream;
+      this.animate();
     });
 
-    this.animate();
   }
 
   async checkCameraSource() {
@@ -74,12 +76,6 @@ export class AppComponent implements OnInit {
       let JSONconfidences = JSON.parse(confidences);
       this.mask_on = JSONconfidences.Confidences['mask on'];
       this.mask_off = JSONconfidences.Confidences['mask off'];
-      if (this.mask_on > this.mask_off) {
-        console.log("mask on");
-      }
-      if (this.mask_off > this.mask_on) {
-        console.log("mask off");
-      }
       
     }).catch( (err) => {
       console.log("Error on Predict", err)
