@@ -56,9 +56,9 @@ export class AiService {
   }
 
   async predict(imageData: ImageData) {
-    // if (!this.model) {
-    //   await this.load();
-    // }
+    if (!this.model) {
+      await this.load();
+    }
     const confidencesTensor = tf.tidy(() => {
       // create a tensor from the canvas image data
       const image = tf.browser.fromPixels(imageData);
@@ -70,14 +70,14 @@ export class AiService {
       // console.log(`Normelaize Image: ${normalizedImage}`);
       
       // make into a batch of 1 so it is shaped [1, height, width, 3]
-      const batchImage: tf.Tensor2D = tf.expandDims(normalizedImage);
+      const batchImage: tf.Tensor4D = tf.expandDims(normalizedImage);
       // console.log(`batch Image: ${batchImage}`);
 
       // run the model on our image and await the results as an array
       if (this.model) {
         return this.model.predict(batchImage, {batchSize: 4});
       }
-      return {"sdsd": "sdsd"};
+      return {"something wrong 1": "please check aiService"};
     }) as (tf.Tensor | undefined);
     if (confidencesTensor) {
       // grab the array of values from the tensor data
@@ -95,6 +95,6 @@ export class AiService {
         )
       }
     }
-    return {"sdsd": "sdsd"};
+    return {"someting wrong 2": "please check aiService"};
   }
 }

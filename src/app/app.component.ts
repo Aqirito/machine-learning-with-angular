@@ -1,7 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Subject } from 'rxjs';
 import { AiService } from './services/ai/ai.service';
-import * as tf from '@tensorflow/tfjs';
 
 
 @Component({
@@ -14,7 +12,7 @@ export class AppComponent implements OnInit {
   predictions: any;
   video: any;
   canvas: any;
-  isCameraOpen = new Subject();
+  isCameraOpen: boolean = false;
   mask_on: any = 0;
   mask_off: any = 0;
   imageData: any;
@@ -23,16 +21,13 @@ export class AppComponent implements OnInit {
   constructor( private aiService: AiService) { }
 
   ngOnInit(): void {
-    // this.loadModel();
     this.video = document.getElementById('video') as HTMLVideoElement;
     this.canvas = document.getElementById('canvas') as HTMLCanvasElement;
 
     this.ctx = this.canvas.getContext('2d');
-
-    this.animate();
   }
 
-  openCamera() {
+  async openCamera() {
     const constsr = {
       video: {
         width: 1280,
@@ -46,22 +41,25 @@ export class AppComponent implements OnInit {
       },
       audio: false,
     }
-    navigator.mediaDevices.getUserMedia(constsr).then(stream => {
+    await navigator.mediaDevices.getUserMedia(constsr).then(stream => {
       this.video.srcObject = stream;
-    })
-    this.isCameraOpen.next(true);
+    });
+
+    this.animate();
   }
 
   async checkCameraSource() {
-
     const devices = await navigator.mediaDevices.enumerateDevices();
     console.log(devices);
   }
   
+  // dispose the modal
   dispose() {
     this.aiService.dispose();
   }
 
+  // don't ever add some delay, pause or any related to time
+  // this already run at Frame Per Second so dont use any "loop"
   animate() {
     requestAnimationFrame(this.animate.bind(this));
     // ctx.fillRect(100, 100, 10, 10);
@@ -69,37 +67,26 @@ export class AppComponent implements OnInit {
     // get the pixel data from the full canvas
     this.imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
     // console.log("image data", this.imageData);
-
-    // this.isCameraOpen.subscribe({
-    //   next: (res) => {
-    //   },
-    //   error: (err) => {
-    //     console.log("error", err);
-    //   }
-    // });
-
     
-    setTimeout( () => {
-      // run the async predict function and set the values to our state
-      this.aiService.predict(this.imageData).then( (res) => {
-        // console.log("Results", res);
-        let confidences = JSON.stringify(res);
-        let parss = JSON.parse(confidences);
-        this.mask_on = parss.Confidences['mask on']
-        this.mask_off = parss.Confidences['mask off']
-        if (this.mask_on > this.mask_off) {
-          console.log("mask on");
-        }
-        if (this.mask_on < this.mask_off) {
-          console.log("mask off");
-        }
-        
-      }).catch( (err) => {
-        console.log("Error on Predict", err)
-      });
-    }, 2000);
+    // run the async predict function and set the values to our state
+    this.aiService.predict(this.imageData).then( (res) => {
+      let confidences = JSON.stringify(res);
+      let JSONconfidences = JSON.parse(confidences);
+      this.mask_on = JSONconfidences.Confidences['mask on'];
+      this.mask_off = JSONconfidences.Confidences['mask off'];
+      if (this.mask_on > this.mask_off) {
+        console.log("mask on");
+      }
+      if (this.mask_off > this.mask_on) {
+        console.log("mask off");
+      }
+      
+    }).catch( (err) => {
+      console.log("Error on Predict", err)
+    });
   }
 
+  // load the modal
   async load() {
     await this.aiService.load();
   }

@@ -13,7 +13,7 @@
       <canvas id="canvas" width="720px" height="480px" style="border: solid 2px;"></canvas>
       <div style="border: solid 2px; width: 720px; height: 480px;">
         <h1 *ngIf="mask_on > mask_off">MASK ON</h1>
-        <h1 *ngIf="mask_on < mask_off">MASK OFF</h1>
+        <h1 *ngIf="mask_off > mask_on">MASK OFF</h1>
       </div>
     </div>
     <button style="width: 100px;" (click)="openCamera()">OPEN CAMERA</button>
