@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { Subject } from 'rxjs';
 import { AiService } from './services/ai/ai.service';
+import * as tf from '@tensorflow/tfjs';
+
 
 @Component({
   selector: 'app-root',
@@ -17,6 +19,7 @@ export class AppComponent implements OnInit {
   mask_off: any = 0;
   imageData: any;
   ctx: any;
+
   constructor( private aiService: AiService) { }
 
   ngOnInit(): void {
@@ -27,34 +30,6 @@ export class AppComponent implements OnInit {
     this.ctx = this.canvas.getContext('2d');
 
     this.animate();
-
-
-    this.isCameraOpen.subscribe({
-      next: (res) => {
-        setTimeout( () => {
-          // run the async predict function and set the values to our state
-          this.aiService.predict(this.imageData).then( (res) => {
-            console.log("Results", res);
-            let confidences = JSON.stringify(res);
-            let parss = JSON.parse(confidences);
-            this.mask_on = parss.Confidences['mask on']
-            this.mask_off = parss.Confidences['mask off']
-            if (this.mask_on > this.mask_off) {
-              console.log("mask on");
-            }
-            if (this.mask_on < this.mask_off) {
-              console.log("mask off");
-            }
-            
-          }).catch( (err) => {
-            console.log("Error on Predict", err)
-          });
-        }, 2000);
-      },
-      error: (err) => {
-        console.log("error", err);
-      }
-    });
   }
 
   openCamera() {
@@ -62,8 +37,11 @@ export class AppComponent implements OnInit {
       video: {
         width: 1280,
         height: 960,
+        // deviceId: {
+        //   exact: "35f6c3f81e60e4fa441614592552d301bfb3af11fa9fa9641215f1bc0b199ff5"
+        // }
         deviceId: {
-          exact: "35f6c3f81e60e4fa441614592552d301bfb3af11fa9fa9641215f1bc0b199ff5"
+          exact: "96296925830bfca612a414e031a61bbaa8aa37ac84c54141eca9a635bcf83d6a"
         }
       },
       audio: false,
@@ -86,11 +64,43 @@ export class AppComponent implements OnInit {
 
   animate() {
     requestAnimationFrame(this.animate.bind(this));
-    console.log("3434343")
     // ctx.fillRect(100, 100, 10, 10);
-    this.ctx.drawImage(this.video, 0, 0);
+    this.ctx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
     // get the pixel data from the full canvas
     this.imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
     // console.log("image data", this.imageData);
+
+    // this.isCameraOpen.subscribe({
+    //   next: (res) => {
+    //   },
+    //   error: (err) => {
+    //     console.log("error", err);
+    //   }
+    // });
+
+    
+    setTimeout( () => {
+      // run the async predict function and set the values to our state
+      this.aiService.predict(this.imageData).then( (res) => {
+        // console.log("Results", res);
+        let confidences = JSON.stringify(res);
+        let parss = JSON.parse(confidences);
+        this.mask_on = parss.Confidences['mask on']
+        this.mask_off = parss.Confidences['mask off']
+        if (this.mask_on > this.mask_off) {
+          console.log("mask on");
+        }
+        if (this.mask_on < this.mask_off) {
+          console.log("mask off");
+        }
+        
+      }).catch( (err) => {
+        console.log("Error on Predict", err)
+      });
+    }, 2000);
+  }
+
+  async load() {
+    await this.aiService.load();
   }
 }
