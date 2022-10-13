@@ -1,0 +1,19 @@
+.buttons {
+  padding: 10px;
+  display: flex;
+  button {
+    padding: 1rem;
+    margin-right: 5px;
+    font-size: large;
+  }
+  .select {
+    display: flex;
+    flex-direction: column;
+    label {
+      font-size: large;
+    }
+    select {
+      padding: .5rem;
+    }
+  }
+}
