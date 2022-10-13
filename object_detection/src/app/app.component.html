@@ -10,7 +10,7 @@
   <h1>Object Detection</h1>
   <div class="container">
     <div class="buttons">
-      <button>LOAD MODELS</button>
+      <button (click)="loadModel()">LOAD MODELS</button>
       <div class="select">
         <label for="checkCameraSource">SELECT CAMERA SOURCE</label>
         <select name="select source" id="select-camera-source" (change)="cameraSource($event)">
